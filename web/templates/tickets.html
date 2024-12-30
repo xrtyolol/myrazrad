@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Тикеты - Discord Bot Panel{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="card p-6 animate__animated animate__fadeIn">
+        <h2 class="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600">
+            <i class="fas fa-ticket-alt mr-2"></i>
+            Управление тикетами
+        </h2>
+
+        <!-- Фильтры -->
+        <div class="flex flex-wrap gap-4 mb-6">
+            <select id="ticketStatus" class="form-select bg-gray-700/50 rounded px-4 py-2">
+                <option value="">Все статусы</option>
+                <option value="open">Открытые</option>
+                <option value="closed">Закрытые</option>
+            </select>
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-4 top-3 text-gray-400"></i>
+                <input type="text" id="searchTickets" placeholder="Поиск по тикетам..." 
+                    class="w-full bg-gray-700/50 rounded px-4 py-2 pl-11">
+            </div>
+        </div>
+
+        <!-- Список тикетов -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for ticket in tickets %}
+            <div class="card p-6 animate__animated animate__fadeInUp" data-ticket-id="{{ ticket.ticket_id }}">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="px-3 py-1 text-sm rounded-full {% if ticket.status == 'open' %}bg-green-500/20 text-green-400{% else %}bg-red-500/20 text-red-400{% endif %}">
+                        <i class="fas {% if ticket.status == 'open' %}fa-lock-open{% else %}fa-lock{% endif %} mr-2"></i>
+                        {{ ticket.status|title }}
+                    </span>
+                    <span class="text-sm text-gray-400">
+                        <i class="far fa-clock mr-2"></i>
+                        {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </span>
+                </div>
+                <h3 class="text-lg font-semibold mb-4">{{ ticket.subject }}</h3>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-400">
+                        <i class="fas fa-user mr-2"></i>
+                        ID: {{ ticket.creator_id }}
+                    </span>
+                    <button class="btn bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 px-4 py-2 rounded view-ticket">
+                        <i class="fas fa-eye mr-2"></i>
+                        Просмотр
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Модальное окно для просмотра тикета -->
+        <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-50 hidden animate__animated animate__fadeIn">
+            <div class="absolute inset-10 bg-gray-800 rounded-lg p-6 overflow-auto">
+                <div class="flex justify-between items-start mb-6">
+                    <h3 class="text-2xl font-bold" id="modalTicketTitle"></h3>
+                    <button class="close-modal text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="ticketMessages" class="space-y-4 mb-6"></div>
+                <div class="flex gap-4">
+                    <input type="text" id="messageInput" placeholder="Введите сообщение..." 
+                        class="flex-1 bg-gray-700/50 rounded px-4 py-2">
+                    <button id="sendMessage" class="btn bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Отправить
+                    </button>
+                    <button id="closeTicket" class="btn bg-red-500/20 hover:bg-red-500/30 text-red-400 px-6 py-2 rounded">
+                        <i class="fas fa-times mr-2"></i>
+                        Закрыть тикет
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('ticketModal');
+    const closeModal = document.querySelector('.close-modal');
+    const viewButtons = document.querySelectorAll('.view-ticket');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendMessage');
+    const closeTicketButton = document.getElementById('closeTicket');
+    let currentTicketId = null;
+
+    // Открытие модального окна
+    viewButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const ticketCard = this.closest('[data-ticket-id]');
+            currentTicketId = ticketCard.dataset.ticketId;
+            
+            // Загружаем сообщения тикета
+            const response = await fetch(`/api/tickets/${currentTicketId}/messages`);
+            const messages = await response.json();
+            
+            const messagesContainer = document.getElementById('ticketMessages');
+            messagesContainer.innerHTML = messages.map(msg => `
+                <div class="flex gap-4 ${msg.is_bot ? 'justify-end' : ''}">
+                    <div class="bg-gray-700/50 rounded p-4 max-w-2xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="font-semibold">${msg.author}</span>
+                            <span class="text-sm text-gray-400">${msg.timestamp}</span>
+                        </div>
+                        <p>${msg.content}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            modal.classList.remove('hidden');
+        });
+    });
+
+    // Закрытие модального окна
+    closeModal.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        currentTicketId = null;
+    });
+
+    // Отправка сообщения
+    sendButton.addEventListener('click', async () => {
+        if (!messageInput.value.trim() || !currentTicketId) return;
+        
+        try {
+            const response = await fetch(`/api/tickets/${currentTicketId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    content: messageInput.value
+                })
+            });
+            
+            if (response.ok) {
+                messageInput.value = '';
+                // Обновляем сообщения
+                const ticketResponse = await fetch(`/api/tickets/${currentTicketId}/messages`);
+                const messages = await ticketResponse.json();
+                document.getElementById('ticketMessages').innerHTML = messages;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    // Закрытие тикета
+    closeTicketButton.addEventListener('click', async () => {
+        if (!currentTicketId) return;
+        
+        try {
+            const response = await fetch(`/api/tickets/${currentTicketId}/close`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                modal.classList.add('hidden');
+                location.reload(); // Обновляем страницу
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+});
+</script>
+{% endblock %}

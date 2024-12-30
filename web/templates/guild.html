@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ guild.name }} - Настройки{% endblock %}
+
+{% block content %}
+<div class="space-y-6 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards]">
+    <!-- Заголовок -->
+    <div class="card p-6 flex items-center">
+        {% if guild.icon %}
+        <img class="h-14 w-14 rounded-xl shadow-lg" src="{{ guild.icon.url }}" alt="">
+        {% else %}
+        <div class="h-14 w-14 rounded-xl bg-gray-700/50 backdrop-blur-lg flex items-center justify-center shadow-lg">
+            <span class="text-2xl font-bold">{{ guild.name[0] }}</span>
+        </div>
+        {% endif %}
+        <h2 class="ml-4 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+            Настройки сервера {{ guild.name }}
+        </h2>
+    </div>
+
+    <form method="POST" action="{{ url_for('update_settings') }}">
+        <input type="hidden" name="guild_id" value="{{ guild.id }}">
+        
+        <!-- Основные настройки -->
+        <div class="card p-6 transition-all duration-200 hover:border-blue-500/20">
+            <h3 class="text-xl font-bold mb-4 flex items-center text-blue-400">
+                <i class="fas fa-cog mr-3"></i>Основные настройки
+            </h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Префикс команд</label>
+                    <input type="text" name="prefix" value="{{ settings.prefix }}" class="mt-1 block w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Роль модератора</label>
+                    <select name="mod_role" class="mt-1 block w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 sm:text-sm">
+                        <option value="">Не выбрано</option>
+                        {% for role in guild.roles %}
+                        <option value="{{ role.id }}" {% if settings.mod_role == role.id|string %}selected{% endif %}>
+                            {{ role.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Приветствия -->
+        <div class="card p-6 transition-all duration-200 hover:border-green-500/20">
+            <h3 class="text-xl font-bold mb-4 flex items-center text-green-400">
+                <i class="fas fa-door-open mr-3"></i>Приветствия
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Канал приветствий</label>
+                    <select name="welcome_channel" class="mt-1 block w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 sm:text-sm">
+                        <option value="">Отключено</option>
+                        {% for channel in guild.text_channels %}
+                        <option value="{{ channel.id }}" {% if settings.welcome_channel == channel.id|string %}selected{% endif %}>
+                            #{{ channel.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Сообщение приветствия</label>
+                    <textarea name="welcome_message" rows="3" class="mt-1 block w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 sm:text-sm">{{ settings.welcome_message }}</textarea>
+                    <p class="mt-2 text-sm text-gray-400">
+                        Доступные переменные: {user} - упоминание пользователя, {server} - название сервера
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Автороль -->
+        <div class="card p-6 transition-all duration-200 hover:border-purple-500/20">
+            <h3 class="text-xl font-bold mb-4 flex items-center text-purple-400">
+                <i class="fas fa-user-tag mr-3"></i>Автороль
+            </h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-300">Роль при входе</label>
+                <select name="autorole" class="mt-1 block w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 sm:text-sm">
+                    <option value="">Отключено</option>
+                    {% for role in guild.roles %}
+                    <option value="{{ role.id }}" {% if settings.autorole == role.id|string %}selected{% endif %}>
+                        {{ role.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Защита -->
+        <div class="card p-6 transition-all duration-200 hover:border-red-500/20">
+            <h3 class="text-xl font-bold mb-4 flex items-center text-red-400">
+                <i class="fas fa-shield-alt mr-3"></i>Защита
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-center">
+                    <input type="checkbox" name="antileak" class="h-4 w-4 text-red-500 focus:ring-red-500 border-gray-600/50 rounded bg-gray-700/50" {% if settings.antileak %}checked{% endif %}>
+                    <label class="ml-2 block text-sm text-gray-300">
+                        Защита от утечки токенов
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">Роль мута</label>
+                    <select name="mute_role" class="mt-1 block w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 sm:text-sm">
+                        <option value="">Не выбрано</option>
+                        {% for role in guild.roles %}
+                        <option value="{{ role.id }}" {% if settings.mute_role == role.id|string %}selected{% endif %}>
+                            {{ role.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="flex justify-end space-x-4 mt-6">
+            <a href="{{ url_for('index') }}" class="btn bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 px-6 py-2 rounded-lg transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Назад
+            </a>
+            <button type="submit" class="btn bg-blue-600/80 hover:bg-blue-700/80 text-white px-6 py-2 rounded-lg transition-all duration-200">
+                <i class="fas fa-save mr-2"></i>Сохранить
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Мягкая подсветка при изменении настроек
+const inputs = document.querySelectorAll('input, select, textarea');
+inputs.forEach(input => {
+    input.addEventListener('change', () => {
+        const card = input.closest('.card');
+        card.style.transition = 'all 0.2s ease';
+        card.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        setTimeout(() => {
+            card.style.backgroundColor = '';
+        }, 300);
+    });
+});
+</script>
+{% endblock %}

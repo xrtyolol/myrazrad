@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Настройки{% endblock %}
+
+{% block content %}
+<div class="space-y-8 animate-fade-in">
+    <div class="card p-8 backdrop-blur-lg border border-gray-700/50">
+        <h2 class="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-br from-blue-400 via-purple-400 to-blue-600 flex items-center">
+            <i class="fas fa-cog mr-3"></i>
+            Настройки интерфейса
+        </h2>
+
+        <div class="space-y-8">
+            <!-- Выбор темы -->
+            <div class="card p-6 border border-gray-700/30 hover:border-gray-600/50 transition duration-200">
+                <h3 class="text-xl font-semibold mb-5 text-gray-200">Тема оформления</h3>
+                <div class="flex space-x-6">
+                    <button class="theme-btn p-5 rounded-xl border border-transparent hover:border-blue-500/30 transition duration-200 bg-gray-800/50"
+                            data-theme="dark">
+                        <i class="fas fa-moon text-blue-400 text-3xl mb-3"></i>
+                        <span class="block text-gray-300">Тёмная</span>
+                    </button>
+                    <button class="theme-btn p-5 rounded-xl border border-transparent hover:border-yellow-500/30 transition duration-200 bg-gray-800/50"
+                            data-theme="light">
+                        <i class="fas fa-sun text-yellow-400 text-3xl mb-3"></i>
+                        <span class="block text-gray-300">Светлая</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Настройки анимаций -->
+            <div class="card p-6 border border-gray-700/30 hover:border-gray-600/50 transition duration-200">
+                <h3 class="text-xl font-semibold mb-5 text-gray-200">Анимации</h3>
+                <div class="space-y-4">
+                    <label class="flex items-center space-x-3 text-gray-300 hover:text-gray-200 transition duration-200">
+                        <input type="checkbox" id="enableTransitions" class="form-checkbox rounded text-blue-500 focus:ring-blue-500/30">
+                        <span>Переходы между страницами</span>
+                    </label>
+                    <label class="flex items-center space-x-3 text-gray-300 hover:text-gray-200 transition duration-200">
+                        <input type="checkbox" id="enableTooltips" class="form-checkbox rounded text-blue-500 focus:ring-blue-500/30">
+                        <span>Подсказки</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Настройки уведомлений -->
+            <div class="card p-6 border border-gray-700/30 hover:border-gray-600/50 transition duration-200">
+                <h3 class="text-xl font-semibold mb-5 text-gray-200">Уведомления</h3>
+                <div class="space-y-4">
+                    <label class="flex items-center space-x-3 text-gray-300 hover:text-gray-200 transition duration-200">
+                        <input type="checkbox" id="enableNotifications" class="form-checkbox rounded text-blue-500 focus:ring-blue-500/30">
+                        <span>Включить уведомления</span>
+                    </label>
+                    <select id="notificationDuration" class="bg-gray-800/50 backdrop-blur-lg border border-gray-600/50 rounded-xl px-4 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition duration-200 text-gray-300">
+                        <option value="3000">3 секунды</option>
+                        <option value="5000">5 секунд</option>
+                        <option value="7000">7 секунд</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const theme = btn.dataset.theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        showNotification(`Тема изменена на ${theme === 'dark' ? 'тёмную' : 'светлую'}`, 'success');
+    });
+});
+
+// Сохранение настроек
+const settings = {
+    enableTransitions: document.getElementById('enableTransitions'),
+    enableTooltips: document.getElementById('enableTooltips'),
+    enableNotifications: document.getElementById('enableNotifications'),
+    notificationDuration: document.getElementById('notificationDuration')
+};
+
+Object.entries(settings).forEach(([key, element]) => {
+    const savedValue = localStorage.getItem(key);
+    if (savedValue !== null) {
+        if (element.type === 'checkbox') {
+            element.checked = savedValue === 'true';
+        } else {
+            element.value = savedValue;
+        }
+    }
+
+    element.addEventListener('change', () => {
+        const value = element.type === 'checkbox' ? element.checked : element.value;
+        localStorage.setItem(key, value);
+        showNotification('Настройки сохранены', 'success');
+    });
+});
+</script>
+{% endblock %} 

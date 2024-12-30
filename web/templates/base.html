@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Discord Bot Panel{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@popperjs/core@2">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
+    <style>
+        :root[data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+        
+        :root[data-theme="light"] {
+            --bg-primary: #f9fafb;
+            --bg-secondary: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -3px;
+            left: 0;
+            background: var(--accent);
+            transition: width 0.2s ease;
+            border-radius: 2px;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .card {
+            backdrop-filter: blur(12px);
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+            border-radius: 12px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            transition: all 0.2s ease;
+            position: relative;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .avatar {
+            border: 2px solid var(--accent);
+            transition: all 0.2s ease;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .page-transition {
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .tippy-box {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .tippy-arrow {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white">
+    <div class="fixed bottom-6 left-6 z-50">
+        <button id="themeToggle" class="p-3 rounded-full bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-lg transition-all duration-200 shadow-lg">
+            <i class="fas fa-sun text-yellow-400 dark:hidden text-lg"></i>
+            <i class="fas fa-moon text-blue-400 hidden dark:block text-lg"></i>
+        </button>
+    </div>
+    <nav class="bg-gray-900/70 backdrop-blur-xl border-b border-gray-800/50 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fab fa-discord text-3xl text-blue-500 mr-3"></i>
+                        <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-600">Bot Panel</span>
+                    </div>
+                    <div class="ml-12 flex items-baseline space-x-6">
+                        <a href="{{ url_for('index') }}" class="nav-link px-4 py-2 rounded-lg text-sm font-medium hover:text-blue-400">
+                            <i class="fas fa-home mr-2"></i>Главная
+                        </a>
+                        <a href="{{ url_for('stats') }}" class="nav-link px-4 py-2 rounded-lg text-sm font-medium hover:text-blue-400">
+                            <i class="fas fa-chart-bar mr-2"></i>Статистика
+                        </a>
+                        <a href="{{ url_for('tickets') }}" class="nav-link px-4 py-2 rounded-lg text-sm font-medium hover:text-blue-400">
+                            <i class="fas fa-ticket-alt mr-2"></i>Тикеты
+                        </a>
+                        <a href="{{ url_for('logs') }}" class="nav-link px-4 py-2 rounded-lg text-sm font-medium hover:text-blue-400">
+                            <i class="fas fa-list mr-2"></i>Логи
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    {% if current_user.is_authenticated %}
+                        <img src="{{ current_user.avatar }}" class="avatar h-10 w-10 rounded-full">
+                        <span class="text-sm font-semibold">{{ current_user.username }}</span>
+                        <a href="{{ url_for('logout') }}" class="btn px-5 py-2.5 rounded-lg text-sm font-medium bg-red-500 hover:bg-red-600 shadow-md">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Выход
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-8 px-6 page-transition">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'components/notifications.html' %}
+
+    {% block scripts %}{% endblock %}
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script>
+        // Управление темой
+        const themeToggle = document.getElementById('themeToggle');
+        const root = document.documentElement;
+        
+        // Загружаем сохраненную тему
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        root.setAttribute('data-theme', savedTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = root.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            root.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Добавляем уведомления
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-6 right-6 p-4 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full backdrop-blur-lg
+                ${type === 'success' ? 'bg-green-500/90' : 
+                type === 'error' ? 'bg-red-500/90' : 
+                'bg-blue-500/90'} text-white`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                                type === 'error' ? 'fa-exclamation-circle' : 
+                                'fa-info-circle'} mr-3 text-lg"></i>
+                    <span class="font-medium">${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 50);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (link.getAttribute('href').startsWith('/')) {
+                    e.preventDefault();
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        window.location = link.href;
+                    }, 200);
+                }
+            });
+        });
+
+        const tooltips = {
+            'themeToggle': 'Переключить тему',
+            'searchLogs': 'Поиск по логам',
+            'logType': 'Фильтр по типу',
+            'searchTickets': 'Поиск по тикетам',
+            'ticketStatus': 'Фильтр по статусу'
+        };
+
+        Object.entries(tooltips).forEach(([id, content]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.setAttribute('data-tippy-content', content);
+            }
+        });
+    </script>
+</body>
+</html>

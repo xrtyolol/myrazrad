@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Логи системы{% endblock %}
+
+{% block content %}
+<!-- Добавляем компонент уведомлений -->
+{% include 'components/notifications.html' %}
+
+<div class="space-y-6">
+    <div class="card p-8 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards] backdrop-blur-lg border border-gray-700/50">
+        <h2 class="text-3xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-br from-blue-400 via-purple-400 to-blue-600 flex items-center">
+            <i class="fas fa-list-alt mr-3"></i>
+            Системные логи
+        </h2>
+
+        <!-- Фильтры -->
+        <div class="flex items-center space-x-4 mb-8">
+            <select id="logType" class="bg-gray-800/50 backdrop-blur-lg border border-gray-600/50 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200">
+                <option value="">Все типы</option>
+                <option value="BOT" {% if request.args.get('type') == 'BOT' %}selected{% endif %}>
+                    <i class="fas fa-robot"></i> Бот
+                </option>
+                <option value="PANEL" {% if request.args.get('type') == 'PANEL' %}selected{% endif %}>
+                    <i class="fas fa-desktop"></i> Панель
+                </option>
+                <option value="TICKET" {% if request.args.get('type') == 'TICKET' %}selected{% endif %}>
+                    <i class="fas fa-ticket-alt"></i> Тикеты
+                </option>
+                <option value="ERROR" {% if request.args.get('type') == 'ERROR' %}selected{% endif %}>
+                    <i class="fas fa-exclamation-triangle"></i> Ошибки
+                </option>
+                <option value="CONSOLE" {% if request.args.get('type') == 'CONSOLE' %}selected{% endif %}>
+                    <i class="fas fa-terminal"></i> Консоль
+                </option>
+            </select>
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-4 top-3 text-gray-400"></i>
+                <input type="text" id="searchLogs" placeholder="Поиск..." 
+                       class="w-full bg-gray-800/50 backdrop-blur-lg border border-gray-600/50 rounded-xl pl-11 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200">
+            </div>
+        </div>
+
+        <!-- Таблица логов -->
+        <div class="card overflow-hidden rounded-xl border border-gray-700/50">
+            <table class="min-w-full divide-y divide-gray-700/50">
+                <thead class="bg-gray-800/50 backdrop-blur-lg">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-clock mr-2"></i>Время
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-tag mr-2"></i>Тип
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-code-branch mr-2"></i>Действие
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-info-circle mr-2"></i>Детали
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700/50" id="logsTable">
+                    {% for log in logs %}
+                    <tr class="hover:bg-gray-800/50 transition-colors duration-200">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-4 py-1.5 text-xs font-semibold rounded-full
+                                {% if log.type == 'BOT' %}bg-blue-900/80 text-blue-200
+                                {% elif log.type == 'PANEL' %}bg-green-900/80 text-green-200
+                                {% elif log.type == 'TICKET' %}bg-purple-900/80 text-purple-200
+                                {% elif log.type == 'CONSOLE' %}bg-yellow-900/80 text-yellow-200
+                                {% else %}bg-red-900/80 text-red-200{% endif %} backdrop-blur-sm">
+                                <i class="fas {% if log.type == 'BOT' %}fa-robot
+                                          {% elif log.type == 'PANEL' %}fa-desktop
+                                          {% elif log.type == 'TICKET' %}fa-ticket-alt
+                                          {% elif log.type == 'CONSOLE' %}fa-terminal
+                                          {% else %}fa-exclamation-triangle{% endif %} mr-1.5"></i>
+                                {{ log.type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ log.action }}</td>
+                        <td class="px-6 py-4 text-sm">{{ log.details }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Пагинация -->
+        {% if pagination.pages > 1 %}
+        <div class="flex justify-center space-x-3 mt-8">
+            {% for page in range(1, pagination.pages + 1) %}
+            <a href="{{ url_for('logs', page=page, type=request.args.get('type', '')) }}"
+               class="btn px-5 py-2.5 rounded-xl {% if page == pagination.page %}bg-blue-600/80{% else %}bg-gray-700/50{% endif %} hover:bg-blue-500/80 transition-colors duration-200 backdrop-blur-sm">
+                {{ page }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('logType').addEventListener('change', function(e) {
+    window.location.href = `{{ url_for('logs') }}?type=${e.target.value}`;
+});
+
+document.getElementById('searchLogs').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#logsTable tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Добавим отладку подключения
+const socket = io();
+
+socket.on('connect', () => {
+    console.log('Connected to WebSocket');
+});
+
+socket.on('disconnect', () => {
+    console.log('Disconnected from WebSocket');
+});
+
+socket.on('error', (error) => {
+    console.error('WebSocket Error:', error);
+});
+
+// Добавим отладку для получения логов
+socket.on('new_log', function(data) {
+    // Добавляем лог в таблицу
+    const table = document.getElementById('logsTable');
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-gray-800/50 transition-colors duration-200 opacity-0';
+    
+    row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${data.timestamp}</td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-4 py-1.5 text-xs font-semibold rounded-full 
+                ${data.type === 'BOT' ? 'bg-blue-900/80 text-blue-200' :
+                data.type === 'PANEL' ? 'bg-green-900/80 text-green-200' :
+                data.type === 'TICKET' ? 'bg-purple-900/80 text-purple-200' :
+                data.type === 'CONSOLE' ? 'bg-yellow-900/80 text-yellow-200' :
+                'bg-red-900/80 text-red-200'} backdrop-blur-sm">
+                <i class="fas ${data.type === 'BOT' ? 'fa-robot' :
+                              data.type === 'PANEL' ? 'fa-desktop' :
+                              data.type === 'TICKET' ? 'fa-ticket-alt' :
+                              data.type === 'CONSOLE' ? 'fa-terminal' :
+                              'fa-exclamation-triangle'} mr-1.5"></i>
+                ${data.type}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm">${data.action}</td>
+        <td class="px-6 py-4 text-sm">${data.details}</td>
+    `;
+    
+    table.insertBefore(row, table.firstChild);
+    
+    // Плавное появление нового лога
+    requestAnimationFrame(() => {
+        row.style.transition = 'opacity 0.2s ease-in';
+        row.style.opacity = '1';
+    });
+
+    // Показываем уведомление
+    createNotification(
+        data.type,
+        data.type,
+        `${data.action}: ${data.details}`,
+        true  // Указываем, что это лог
+    );
+});
+</script>
+{% endblock %}

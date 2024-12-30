@@ -1,0 +1,218 @@
+<div class="notifications-container">
+    <div class="toast-container position-fixed bottom-0 end-0 p-4">
+        <!-- Тосты будут добавляться здесь динамически -->
+    </div>
+</div>
+
+<style>
+.toast {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    margin-bottom: 12px;
+    min-width: 320px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.toast:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.toast-header {
+    border-radius: 12px 12px 0 0;
+    padding: 12px 15px;
+    border: none;
+    display: flex;
+    align-items: center;
+}
+
+.toast-header .fas {
+    font-size: 1.1em;
+}
+
+.toast-header strong {
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.toast-body {
+    padding: 12px 15px;
+    font-size: 14px;
+    color: #4a4a4a;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Стили для разных типов уведомлений */
+.toast.success .toast-header {
+    background-color: #28a745;
+    color: white;
+}
+
+.toast.error .toast-header {
+    background-color: #dc3545;
+    color: white;
+}
+
+.toast.warning .toast-header {
+    background: #ffc107;
+    color: #000;
+}
+
+.toast.info .toast-header {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.toast.bot .toast-header {
+    background: linear-gradient(135deg, #7289da 0%, #5865F2 100%);
+    color: white;
+}
+
+.toast.panel .toast-header {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+}
+
+.toast.ticket .toast-header {
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+    color: white;
+}
+
+.toast.console .toast-header {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+}
+
+/* Анимация появления */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast {
+    animation: slideIn 0.3s ease forwards;
+}
+
+/* Кнопка закрытия */
+.btn-close {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* Адаптивность */
+@media (max-width: 576px) {
+    .toast {
+        min-width: 280px;
+    }
+    
+    .toast-container {
+        padding: 10px !important;
+    }
+}
+
+/* Ограничиваем количество одновременных уведомлений */
+.toast-container {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Улучшаем анимацию для логов */
+@keyframes slideInLog {
+    from {
+        transform: translateX(100%) translateY(10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) translateY(0);
+        opacity: 1;
+    }
+}
+
+.toast {
+    animation: slideInLog 0.3s ease forwards;
+}
+</style>
+
+<script>
+// Модифицируем функцию для логов
+function createNotification(type, title, message, isLog = false) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type.toLowerCase()}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    // Для логов используем более компактный вид
+    if (isLog) {
+        toast.innerHTML = `
+            <div class="toast-header">
+                <i class="fas ${getNotificationIcon(type)}"></i>
+                <strong class="me-auto">${title}</strong>
+                <small class="text-white opacity-75">${new Date().toLocaleTimeString()}</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body text-sm">
+                ${message}
+            </div>
+        `;
+    } else {
+        // Стандартный вид для обычных уведомлений
+        toast.innerHTML = `
+            <div class="toast-header">
+                <i class="fas ${getNotificationIcon(type)}"></i>
+                <strong class="me-auto">${title}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        `;
+    }
+    
+    const container = document.querySelector('.toast-container');
+    container.appendChild(toast);
+    
+    // Ограничиваем количество уведомлений
+    while (container.children.length > 5) {
+        container.removeChild(container.firstChild);
+    }
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: isLog ? 3000 : 5000  // Логи показываем меньше времени
+    });
+    
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'SUCCESS': 'fa-check-circle',
+        'ERROR': 'fa-exclamation-circle',
+        'WARNING': 'fa-exclamation-triangle',
+        'INFO': 'fa-info-circle',
+        'BOT': 'fa-robot',
+        'PANEL': 'fa-desktop',
+        'TICKET': 'fa-ticket-alt',
+        'CONSOLE': 'fa-terminal'
+    };
+    return icons[type.toUpperCase()] || 'fa-bell';
+}
+</script> 

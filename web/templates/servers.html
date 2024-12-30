@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Серверы{% endblock %}
+
+{% block content %}
+<div class="space-y-6 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards]">
+    <!-- Статистика -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div class="card p-6 transition-transform duration-200 hover:scale-[1.02]">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-server text-3xl text-transparent bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-400 truncate">Всего серверов</dt>
+                        <dd class="text-2xl font-semibold text-white">{{ stats.total_servers }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card p-6 transition-transform duration-200 hover:scale-[1.02]">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-users text-3xl text-transparent bg-gradient-to-br from-green-400 to-green-600 bg-clip-text"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-400 truncate">Всего участников</dt>
+                        <dd class="text-2xl font-semibold text-white">{{ stats.total_members }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card p-6 transition-transform duration-200 hover:scale-[1.02]">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-crown text-3xl text-transparent bg-gradient-to-br from-yellow-400 to-yellow-600 bg-clip-text"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-400 truncate">Крупнейший сервер</dt>
+                        <dd class="text-2xl font-semibold text-white">{{ stats.largest_server }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список серверов -->
+    <div class="card p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-transparent bg-gradient-to-br from-blue-400 to-blue-600 bg-clip-text flex items-center">
+                <i class="fas fa-server mr-3"></i>Список серверов
+            </h3>
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-3 text-gray-400"></i>
+                <input type="text" id="serverSearch" placeholder="Поиск серверов..." 
+                       class="bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-xl pl-11 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all duration-200">
+            </div>
+        </div>
+        <div class="divide-y divide-gray-700/50" id="serverList">
+            {% for server in servers %}
+            <div class="transition-colors duration-200 hover:bg-gray-700/30 rounded-lg">
+                <a href="{{ url_for('guild', guild_id=server.id) }}" class="block p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            {% if server.icon_url %}
+                            <img class="h-12 w-12 rounded-xl shadow-lg" src="{{ server.icon_url }}" alt="">
+                            {% else %}
+                            <div class="h-12 w-12 rounded-xl bg-gray-700/50 backdrop-blur-lg flex items-center justify-center shadow-lg">
+                                <span class="text-xl font-bold">{{ server.name[0] }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="ml-4">
+                                <div class="text-lg font-medium text-white">{{ server.name }}</div>
+                                <div class="mt-1 flex items-center text-sm text-gray-400 space-x-4">
+                                    <span><i class="fas fa-users mr-2"></i>{{ server.member_count }}</span>
+                                    <span><i class="fas fa-hashtag mr-2"></i>{{ server.text_channels }}</span>
+                                    <span><i class="fas fa-microphone mr-2"></i>{{ server.voice_channels }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="text-right text-sm text-gray-400 mr-4">
+                                <div>Создан</div>
+                                <div>{{ server.created_at }}</div>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Поиск по серверам
+document.getElementById('serverSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const servers = document.getElementById('serverList').getElementsByTagName('div');
+    
+    Array.from(servers).forEach(server => {
+        const name = server.querySelector('.text-white')?.textContent.toLowerCase();
+        if (name && name.includes(searchTerm)) {
+            server.style.display = '';
+        } else {
+            server.style.display = 'none';
+        }
+    });
+});
+
+// WebSocket для обновления в реальном времени
+const socket = io();
+socket.on('server_update', function(data) {
+    // Обновление статистики
+    document.querySelector('[data-stat="total_servers"]').textContent = data.total_servers;
+    document.querySelector('[data-stat="total_members"]').textContent = data.total_members;
+    document.querySelector('[data-stat="largest_server"]').textContent = data.largest_server;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Анти-слив - Discord Bot Panel{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="card p-6">
+        <h2 class="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-red-600">
+            <i class="fas fa-shield-alt mr-2"></i>
+            Настройки анти-слив системы
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <!-- Основные настройки -->
+            <div class="card bg-gray-800/50 backdrop-blur-lg p-6 border border-gray-700/50">
+                <h3 class="text-xl font-bold mb-4 text-red-400">Основные настройки</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Статус защиты</span>
+                        <label class="switch">
+                            <input type="checkbox" id="protection-status">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Уровень защиты</span>
+                        <select class="form-select bg-gray-700/50 rounded px-3 py-2 border border-gray-600">
+                            <option value="low">Низкий</option>
+                            <option value="medium">Средний</option>
+                            <option value="high">Высокий</option>
+                            <option value="extreme">Экстремальный</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Автобан</span>
+                        <label class="switch">
+                            <input type="checkbox" id="autoban">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Защита от действий -->
+            <div class="card bg-gray-800/50 backdrop-blur-lg p-6 border border-gray-700/50">
+                <h3 class="text-xl font-bold mb-4 text-red-400">Защита от действий</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Удаление каналов</span>
+                        <label class="switch">
+                            <input type="checkbox" id="protect-channels">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Удаление ролей</span>
+                        <label class="switch">
+                            <input type="checkbox" id="protect-roles">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Массовый бан</span>
+                        <label class="switch">
+                            <input type="checkbox" id="protect-mass-ban">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Массовый кик</span>
+                        <label class="switch">
+                            <input type="checkbox" id="protect-mass-kick">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Лимиты действий -->
+            <div class="card bg-gray-800/50 backdrop-blur-lg p-6 border border-gray-700/50">
+                <h3 class="text-xl font-bold mb-4 text-red-400">Лимиты действий</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Бан (в минуту)</span>
+                        <input type="number" class="form-input bg-gray-700/50 rounded w-20 px-2 py-1 border border-gray-600" value="3">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Кик (в минуту)</span>
+                        <input type="number" class="form-input bg-gray-700/50 rounded w-20 px-2 py-1 border border-gray-600" value="5">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Каналы (в минуту)</span>
+                        <input type="number" class="form-input bg-gray-700/50 rounded w-20 px-2 py-1 border border-gray-600" value="2">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Роли (в минуту)</span>
+                        <input type="number" class="form-input bg-gray-700/50 rounded w-20 px-2 py-1 border border-gray-600" value="2">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Белый список и логи -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <!-- Whitelist -->
+            <div class="card bg-gray-800/50 backdrop-blur-lg p-6 border border-gray-700/50">
+                <h3 class="text-xl font-bold mb-4 text-red-400">Белый список</h3>
+                <div class="space-y-4">
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="ID пользователя" class="form-input bg-gray-700/50 rounded px-3 py-2 flex-grow border border-gray-600">
+                        <button class="btn bg-green-600/90 hover:bg-green-700/90 px-4 py-2 rounded backdrop-blur-lg">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="max-h-40 overflow-y-auto">
+                        <div class="space-y-2" id="whitelist-container">
+                            <!-- Список пользователей -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Логи действий -->
+            <div class="card bg-gray-800/50 backdrop-blur-lg p-6 border border-gray-700/50">
+                <h3 class="text-xl font-bold mb-4 text-red-400">Последние действия</h3>
+                <div class="bg-gray-900/50 rounded-lg p-4 max-h-60 overflow-y-auto border border-gray-700/50">
+                    <div class="space-y-2" id="logs-container">
+                        <!-- Логи -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex justify-end gap-4 mt-6">
+            <button class="btn bg-gray-600/90 hover:bg-gray-700/90 px-6 py-2 rounded backdrop-blur-lg">
+                <i class="fas fa-undo mr-2"></i>Сбросить
+            </button>
+            <button class="btn bg-red-600/90 hover:bg-red-700/90 px-6 py-2 rounded backdrop-blur-lg">
+                <i class="fas fa-save mr-2"></i>Сохранить
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Стили для переключателя */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4b5563;
+    transition: .2s ease-in-out;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .2s ease-in-out;
+}
+
+input:checked + .slider {
+    background-color: #ef4444;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Дополнительные стили для новых элементов */
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #ef4444;
+    --ring-color: #3b82f6;
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Сохранение настроек
+    document.querySelector('.btn-save').addEventListener('click', async function() {
+        const settings = {
+            guild_id: '{{ request.args.get("guild_id") }}',
+            enabled: document.getElementById('protection-status').checked,
+            protection_level: document.querySelector('select').value,
+            autoban: document.getElementById('autoban').checked,
+            protect_channels: document.getElementById('protect-channels').checked,
+            protect_roles: document.getElementById('protect-roles').checked,
+            protect_mass_ban: document.getElementById('protect-mass-ban').checked,
+            protect_mass_kick: document.getElementById('protect-mass-kick').checked,
+            ban_limit: parseInt(document.querySelector('input[placeholder="Бан (в минуту)"]').value),
+            kick_limit: parseInt(document.querySelector('input[placeholder="Кик (в минуту)"]').value),
+            channel_limit: parseInt(document.querySelector('input[placeholder="Каналы (в минуту)"]').value),
+            role_limit: parseInt(document.querySelector('input[placeholder="Роли (в минуту)"]').value)
+        };
+
+        try {
+            const response = await fetch('/api/antinuke/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            });
+            
+            if (response.ok) {
+                addLog('Настройки сохранены', 'Система', new Date().toLocaleTimeString());
+            } else {
+                throw new Error('Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            addLog('Ошибка сохранения настроек', 'Система', new Date().toLocaleTimeString());
+        }
+    });
+
+    // Добавление в белый список
+    document.querySelector('.btn-add-whitelist').addEventListener('click', async function() {
+        const input = document.querySelector('input[placeholder="ID пользователя"]');
+        const userId = input.value.trim();
+        
+        if (!userId) return;
+
+        try {
+            const response = await fetch('/api/antinuke/whitelist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    guild_id: '{{ request.args.get("guild_id") }}',
+                    user_id: userId
+                })
+            });
+            
+            if (response.ok) {
+                addToWhitelist(userId, 'User ' + userId);
+                input.value = '';
+                addLog(`Пользователь ${userId} добавлен в белый список`, 'Система', new Date().toLocaleTimeString());
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            addLog('Ошибка добавления в белый список', 'Система', new Date().toLocaleTimeString());
+        }
+    });
+});
+</script>
+{% endblock %} 

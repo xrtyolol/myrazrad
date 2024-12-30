@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Discord Bot Panel{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="card bg-gray-800/50 backdrop-blur-lg border border-gray-700/50 p-8 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards]">
+        <h2 class="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600 flex items-center">
+            <i class="fas fa-robot mr-4"></i>
+            Добро пожаловать, {{ current_user.username }}!
+        </h2>
+        <p class="text-gray-300 text-lg">Это панель управления Discord ботом.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="card bg-gray-800/50 backdrop-blur-lg border border-gray-700/50 p-6 hover:border-blue-500/50 transition-all duration-200 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards] delay-[100ms]">
+            <h3 class="text-xl font-bold mb-3 flex items-center text-blue-400">
+                <i class="fas fa-chart-line mr-3"></i>
+                Статистика
+            </h3>
+            <p class="text-gray-300 mb-4">Просмотр статистики бота и серверов</p>
+            <a href="{{ url_for('stats') }}" class="btn w-full bg-blue-600/80 hover:bg-blue-700/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center">
+                <i class="fas fa-arrow-right mr-2"></i>Открыть
+            </a>
+        </div>
+
+        <div class="card bg-gray-800/50 backdrop-blur-lg border border-gray-700/50 p-6 hover:border-purple-500/50 transition-all duration-200 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards] delay-[200ms]">
+            <h3 class="text-xl font-bold mb-3 flex items-center text-purple-400">
+                <i class="fas fa-ticket-alt mr-3"></i>
+                Тикеты
+            </h3>
+            <p class="text-gray-300 mb-4">Управление тикетами пользователей</p>
+            <a href="{{ url_for('tickets') }}" class="btn w-full bg-purple-600/80 hover:bg-purple-700/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center">
+                <i class="fas fa-arrow-right mr-2"></i>Открыть
+            </a>
+        </div>
+
+        <div class="card bg-gray-800/50 backdrop-blur-lg border border-gray-700/50 p-6 hover:border-green-500/50 transition-all duration-200 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards] delay-[300ms]">
+            <h3 class="text-xl font-bold mb-3 flex items-center text-green-400">
+                <i class="fas fa-list mr-3"></i>
+                Логи
+            </h3>
+            <p class="text-gray-300 mb-4">Просмотр системных логов</p>
+            <a href="{{ url_for('logs') }}" class="btn w-full bg-green-600/80 hover:bg-green-700/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center">
+                <i class="fas fa-arrow-right mr-2"></i>Открыть
+            </a>
+        </div>
+
+        <div class="card bg-gray-800/50 backdrop-blur-lg border border-gray-700/50 p-6 hover:border-red-500/50 transition-all duration-200 opacity-0 animate-[fadeIn_0.3s_ease-in_forwards] delay-[400ms]">
+            <h3 class="text-xl font-bold mb-3 flex items-center text-red-400">
+                <i class="fas fa-shield-alt mr-3"></i>
+                Анти-слив
+            </h3>
+            <p class="text-gray-300 mb-4">Управление защитой сервера</p>
+            {% if current_user.guilds %}
+                <select class="form-select w-full bg-gray-700/50 backdrop-blur-lg border border-gray-600/50 rounded-lg px-4 py-3 mb-4 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50" id="guild-selector">
+                    <option value="">Выберите сервер</option>
+                    {% for guild in current_user.guilds %}
+                        <option value="{{ guild.id }}">{{ guild.name }}</option>
+                    {% endfor %}
+                </select>
+                <a href="#" id="antinuke-link" class="btn w-full bg-red-600/80 hover:bg-red-700/80 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center disabled">
+                    <i class="fas fa-arrow-right mr-2"></i>Открыть
+                </a>
+            {% else %}
+                <p class="text-red-500 mt-2">Нет доступных серверов</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('guild-selector').addEventListener('change', function() {
+    const link = document.getElementById('antinuke-link');
+    if (this.value) {
+        link.href = `/antinuke?guild_id=${this.value}`;
+        link.classList.remove('disabled');
+    } else {
+        link.href = '#';
+        link.classList.add('disabled');
+    }
+});
+</script>
+{% endblock %}
